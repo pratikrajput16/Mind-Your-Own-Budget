@@ -35,4 +35,8 @@ app.get("/", (req, res) => {
     });
 });
 
+const errorMiddleware = require("./middleware/errorMiddleware");
+
+app.use(errorMiddleware);
+
 module.exports = app;
