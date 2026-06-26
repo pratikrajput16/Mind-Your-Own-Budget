@@ -1,6 +1,12 @@
 const asyncHandler = (fn) => {
-  return (req, res, next) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
+  return async (req, res, next) => {
+    try {
+      await fn(req, res, next);
+    } catch (error) {
+      console.error("🔥 ERROR INSIDE CONTROLLER:");
+      console.error(error);
+      next(error);
+    }
   };
 };
 

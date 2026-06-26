@@ -3,6 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -34,6 +35,8 @@ app.get("/", (req, res) => {
         message: "Mind Your Own Budget Backend Running",
     });
 });
+
+app.use("/api/v1/auth", authRoutes);
 
 const errorMiddleware = require("./middleware/errorMiddleware");
 
