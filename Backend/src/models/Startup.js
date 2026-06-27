@@ -19,13 +19,23 @@ const startupSchema = new mongoose.Schema(
       default: 0,
     },
 
+    teamSize: {
+      type: Number,
+      default: 1,
+    },
+
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
-    employees: [
+    currency: {
+      type: String,
+      default: "INR",
+    },
+
+    members: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
