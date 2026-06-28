@@ -9,6 +9,7 @@ const EXPENSE_CATEGORIES = [
   "Office Supplies",
   "Entertainment",
   "Miscellaneous",
+  "Edits",
 ];
 
 module.exports = EXPENSE_CATEGORIES;
