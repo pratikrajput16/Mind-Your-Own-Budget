@@ -1,15 +1,21 @@
 const EXPENSE_CATEGORIES = [
-  "Food",
+  "Salary",
+  "Software",
+  "Cloud Services",
+  "Marketing",
+  "Office Rent",
+  "Office Supplies",
+  "Utilities",
   "Travel",
   "Accommodation",
-  "Salary",
-  "Utilities",
-  "Marketing",
-  "Software",
-  "Office Supplies",
+  "Food",
+  "Equipment",
+  "Legal",
+  "Taxes",
+  "Internet",
+  "Training",
   "Entertainment",
   "Miscellaneous",
-  "Edits",
 ];
 
 module.exports = EXPENSE_CATEGORIES;
