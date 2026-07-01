@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 const authRoutes = require("./routes/authRoutes");
 const startupRoutes = require("./routes/startupRoutes");
 const expenseRoutes = require("./routes/expenseRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.get("/", (req, res) => {
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/startup", startupRoutes);
 app.use("/api/v1/expenses", expenseRoutes);
+app.use("/api/v1/dashboard", dashboardRoutes);
 
 const errorMiddleware = require("./middleware/errorMiddleware");
 
