@@ -9,6 +9,7 @@ const startupRoutes = require("./routes/startupRoutes");
 const expenseRoutes = require("./routes/expenseRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const budgetRoutes = require("./routes/budgetRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use("/api/v1/startup", startupRoutes);
 app.use("/api/v1/expenses", expenseRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/budgets", budgetRoutes);
+app.use("/api/v1/ai", aiRoutes);
 
 const errorMiddleware = require("./middleware/errorMiddleware");
 
