@@ -1,3 +1,15 @@
+import os
+
+import google.generativeai as genai
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+model = genai.GenerativeModel("gemini-2.5-flash")
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -91,6 +103,109 @@ def analyze(data: ExpenseRequest):
                 }
             )
 
+    forecast = None
+
+    if len(months) >= 2:
+
+        monthly_totals = []
+
+        for month in months:
+            monthly_totals.append(sum(monthly_data[month].values()))
+
+        increases = []
+
+        for i in range(1, len(monthly_totals)):
+            increases.append(monthly_totals[i] - monthly_totals[i - 1])
+
+        average_change = round(
+            sum(increases) / len(increases),
+            2,
+        )
+
+        predicted = round(
+            monthly_totals[-1] + average_change,
+            2,
+        )
+
+        forecast = {
+            "currentMonth": months[-1],
+            "currentTotal": monthly_totals[-1],
+            "predictedNextMonth": predicted,
+            "expectedChange": average_change,
+        }
+
+    smart_suggestions = []
+
+    # High spending categories
+    for category, amount in category_totals.items():
+
+        percentage = (amount / total) * 100
+
+        if percentage >= 50:
+            smart_suggestions.append(
+                f"{category} spending accounts for {percentage:.2f}% of total expenses. Consider delaying non-essential purchases in this category."
+            )
+
+        elif percentage >= 25:
+            smart_suggestions.append(
+                f"{category} is one of your major expenses. Review whether costs can be optimized."
+            )
+
+    # Trend-based suggestions
+    for trend in trends:
+
+        if trend["direction"] == "Increasing":
+            smart_suggestions.append(
+                f"{trend['category']} expenses are increasing. Monitor this category closely."
+            )
+
+        elif trend["direction"] == "Decreasing":
+            smart_suggestions.append(
+                f"{trend['category']} expenses are decreasing. Good cost control."
+            )
+
+    # Forecast suggestion
+    if forecast:
+
+        if forecast["expectedChange"] > 0:
+            smart_suggestions.append(
+                "Overall spending is expected to increase next month. Consider planning your budget in advance."
+            )
+
+        elif forecast["expectedChange"] < 0:
+            smart_suggestions.append(
+                "Overall spending is expected to decrease next month. Keep maintaining your current spending habits."
+            )
+
+    prompt = f"""
+    You are an expert startup financial advisor.
+
+    Analyze the following startup expenses.
+
+    Summary:
+    Total Expenses: {total}
+
+    Transactions: {transactions}
+
+    Category Breakdown:
+    {category_totals}
+
+    Trends:
+    {trends}
+
+    Forecast:
+    {forecast}
+
+    Give 5 practical financial suggestions.
+    Keep the answer concise.
+    """
+    
+    #Ask Gemini
+    response = model.generate_content(prompt)
+
+    llm_advice = response.text
+    
+
     highest_category = max(category_totals, key=category_totals.get)
 
     lowest_category = min(category_totals, key=category_totals.get)
@@ -127,4 +242,7 @@ def analyze(data: ExpenseRequest):
         },
         "recommendations": recommendations,
         "trends": trends,
+        "forecast": forecast,
+        "smartSuggestions": smart_suggestions,
+        "llmAdvice": llm_advice,
     }

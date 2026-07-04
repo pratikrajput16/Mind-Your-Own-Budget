@@ -10,6 +10,7 @@ const expenseRoutes = require("./routes/expenseRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const budgetRoutes = require("./routes/budgetRoutes");
 const aiRoutes = require("./routes/aiRoutes");
+const reportRoutes = require("./routes/reportRoutes");
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use("/api/v1/expenses", expenseRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/budgets", budgetRoutes);
 app.use("/api/v1/ai", aiRoutes);
+app.use("/api/v1/reports", reportRoutes);
 
 const errorMiddleware = require("./middleware/errorMiddleware");
 
