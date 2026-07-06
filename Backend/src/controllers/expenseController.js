@@ -5,6 +5,11 @@ const ApiResponse = require("../utils/ApiResponse");
 const Startup = require("../models/Startup");
 const expenseService = require("../services/expenseService");
 
+const {
+  HTTP_STATUS,
+  API_MESSAGES,
+} = require("../config/constants");
+
 const createExpense = asyncHandler(async (req, res) => {
   const {
     title,
@@ -26,7 +31,10 @@ const createExpense = asyncHandler(async (req, res) => {
   const startup = await Startup.findById(req.user.startup);
 
   if (!startup) {
-    throw new ApiError(404, "Startup not found");
+    throw new ApiError(
+  HTTP_STATUS.NOT_FOUND,
+  API_MESSAGES.STARTUP_NOT_FOUND
+);
   }
 
   const expense = await expenseService.createExpense({
@@ -40,12 +48,12 @@ const createExpense = asyncHandler(async (req, res) => {
     createdBy: req.user._id,
   });
 
-  res.status(201).json(
+  res.status(HTTP_STATUS.CREATED).json(
     new ApiResponse(
-      201,
-      "Expense added successfully",
-      expense
-    )
+  HTTP_STATUS.CREATED,
+  API_MESSAGES.EXPENSE_CREATED,
+  expense
+)
   );
 });
 
