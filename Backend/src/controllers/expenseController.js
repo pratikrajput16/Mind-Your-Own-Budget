@@ -5,36 +5,21 @@ const ApiResponse = require("../utils/ApiResponse");
 const Startup = require("../models/Startup");
 const expenseService = require("../services/expenseService");
 
-const {
-  HTTP_STATUS,
-  API_MESSAGES,
-} = require("../config/constants");
+const { HTTP_STATUS, API_MESSAGES } = require("../config/constants");
 
 const createExpense = asyncHandler(async (req, res) => {
-  const {
-    title,
-    amount,
-    category,
-    paymentMethod,
-    description,
-    date,
-  } = req.body;
+  const { title, amount, category, paymentMethod, description, date } =
+    req.body;
 
   if (!title || !amount || !category) {
-    throw new ApiError(
-      400,
-      "Title, amount and category are required"
-    );
+    throw new ApiError(400, "Title, amount and category are required");
   }
 
   // Find the startup of the logged-in user
   const startup = await Startup.findById(req.user.startup);
 
   if (!startup) {
-    throw new ApiError(
-  HTTP_STATUS.NOT_FOUND,
-  API_MESSAGES.STARTUP_NOT_FOUND
-);
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, API_MESSAGES.STARTUP_NOT_FOUND);
   }
 
   const expense = await expenseService.createExpense({
@@ -48,86 +33,76 @@ const createExpense = asyncHandler(async (req, res) => {
     createdBy: req.user._id,
   });
 
-  res.status(HTTP_STATUS.CREATED).json(
-    new ApiResponse(
-  HTTP_STATUS.CREATED,
-  API_MESSAGES.EXPENSE_CREATED,
-  expense
-)
-  );
+  res
+    .status(HTTP_STATUS.CREATED)
+    .json(
+      new ApiResponse(
+        HTTP_STATUS.CREATED,
+        API_MESSAGES.EXPENSE_CREATED,
+        expense,
+      ),
+    );
 });
 
 const getExpenses = asyncHandler(async (req, res) => {
-
   const startup = await Startup.findById(req.user.startup);
 
   if (!startup) {
-    throw new ApiError(404, "Startup not found");
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, API_MESSAGES.STARTUP_NOT_FOUND);
   }
 
-  const result = await expenseService.getExpenses(
-    startup._id,
-    req.query
-  );
+  const result = await expenseService.getExpenses(startup._id, req.query);
 
-  res.status(200).json(
-    new ApiResponse(
-      200,
-      "Expenses fetched successfully",
-      result
-    )
-  );
+  res
+    .status(HTTP_STATUS.OK)
+    .json(
+      new ApiResponse(HTTP_STATUS.OK, "Expenses fetched successfully", result),
+    );
 });
 
 const updateExpense = asyncHandler(async (req, res) => {
   const startup = await Startup.findById(req.user.startup);
 
   if (!startup) {
-    throw new ApiError(404, "Startup not found");
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, API_MESSAGES.STARTUP_NOT_FOUND);
   }
 
   const expense = await expenseService.updateExpense(
     req.params.id,
     startup._id,
-    req.body
+    req.body,
   );
 
   if (!expense) {
-    throw new ApiError(404, "Expense not found");
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, API_MESSAGES.EXPENSE_NOT_FOUND);
   }
 
-  res.status(200).json(
-    new ApiResponse(
-      200,
-      "Expense updated successfully",
-      expense
-    )
-  );
+  res
+    .status(HTTP_STATUS.OK)
+    .json(
+      new ApiResponse(HTTP_STATUS.OK, API_MESSAGES.EXPENSE_UPDATED, expense),
+    );
 });
 
 const deleteExpense = asyncHandler(async (req, res) => {
   const startup = await Startup.findById(req.user.startup);
 
   if (!startup) {
-    throw new ApiError(404, "Startup not found");
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, API_MESSAGES.STARTUP_NOT_FOUND);
   }
 
   const expense = await expenseService.deleteExpense(
     req.params.id,
-    startup._id
+    startup._id,
   );
 
   if (!expense) {
-    throw new ApiError(404, "Expense not found");
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, API_MESSAGES.EXPENSE_NOT_FOUND);
   }
 
-  res.status(200).json(
-    new ApiResponse(
-      200,
-      "Expense deleted successfully",
-      null
-    )
-  );
+  res
+    .status(HTTP_STATUS.OK)
+    .json(new ApiResponse(HTTP_STATUS.OK, API_MESSAGES.EXPENSE_DELETED, null));
 });
 
 module.exports = {
