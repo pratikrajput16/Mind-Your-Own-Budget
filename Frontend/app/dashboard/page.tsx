@@ -1,24 +1,49 @@
-import { Header } from "@/components/dashboard/header"
-import { StatCard } from "@/components/dashboard/stat-card"
-import { InsightCard } from "@/components/dashboard/insight-card"
-import { IncomeExpenseChart, CategoryPieChart } from "@/components/dashboard/overview-charts"
-import { RecentTransactions } from "@/components/dashboard/recent-transactions"
-import { HealthScore } from "@/components/dashboard/health-score"
-import { userProfile, insights } from "@/lib/mock-data"
-import { Sparkles } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
+"use client";
+
+import { useEffect, useState } from "react";
+import { getDashboard } from "@/lib/dashboard";
+
+import { Header } from "@/components/dashboard/header";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { InsightCard } from "@/components/dashboard/insight-card";
+import {
+  IncomeExpenseChart,
+  CategoryPieChart,
+} from "@/components/dashboard/overview-charts";
+import { RecentTransactions } from "@/components/dashboard/recent-transactions";
+import { HealthScore } from "@/components/dashboard/health-score";
+import { userProfile, insights } from "@/lib/mock-data";
+import { Sparkles } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
-  const totalExpenses = 6375.06
-  const monthlyIncome = userProfile.monthlyIncome + 1200 // Including freelance
+  const [dashboard, setDashboard] = useState<any>(null);
+  const monthlyIncome = userProfile.monthlyIncome + 1200;
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const data = await getDashboard();
+        setDashboard(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchDashboard();
+  }, []);
+
+  if (!dashboard) {
+    return <div className="p-6">Loading...</div>;
+  }
 
   return (
     <div className="flex flex-col">
       <Header
         title="Dashboard"
-        subtitle={`Welcome back, ${userProfile.name.split(' ')[0]}`}
+        subtitle={`Welcome back, ${userProfile.name.split(" ")[0]}`}
       />
 
       <div className="flex flex-col gap-6 p-6">
@@ -26,8 +51,8 @@ export default function DashboardPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Total Balance"
-            value={`$${userProfile.totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-            change={{ value: 12.5, type: 'increase' }}
+            value={`$${userProfile.totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+            change={{ value: 12.5, type: "increase" }}
             iconName="wallet"
             iconColor="text-primary"
             iconBgColor="bg-primary/10"
@@ -35,15 +60,15 @@ export default function DashboardPage() {
           <StatCard
             title="Monthly Income"
             value={`$${monthlyIncome.toLocaleString()}`}
-            change={{ value: 8.2, type: 'increase' }}
+            change={{ value: 8.2, type: "increase" }}
             iconName="trending-up"
             iconColor="text-accent"
             iconBgColor="bg-accent/10"
           />
           <StatCard
             title="Monthly Expenses"
-            value={`$${totalExpenses.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-            change={{ value: 3.1, type: 'decrease' }}
+            value={`₹${dashboard.totalExpenses.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+            change={{ value: 3.1, type: "decrease" }}
             iconName="target"
             iconColor="text-chart-5"
             iconBgColor="bg-chart-5/10"
@@ -51,7 +76,7 @@ export default function DashboardPage() {
           <StatCard
             title="Savings Rate"
             value={`${userProfile.savingsRate}%`}
-            change={{ value: 2.3, type: 'increase' }}
+            change={{ value: 2.3, type: "increase" }}
             iconName="piggy-bank"
             iconColor="text-chart-2"
             iconBgColor="bg-chart-2/10"
@@ -65,7 +90,9 @@ export default function DashboardPage() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <Sparkles className="h-4 w-4 text-primary-foreground" />
               </div>
-              <CardTitle className="text-base font-semibold">AI Insights</CardTitle>
+              <CardTitle className="text-base font-semibold">
+                AI Insights
+              </CardTitle>
             </div>
             <Link href="/dashboard/insights">
               <Button variant="ghost" size="sm" className="text-primary">
@@ -97,5 +124,5 @@ export default function DashboardPage() {
         <RecentTransactions />
       </div>
     </div>
-  )
+  );
 }
