@@ -18,8 +18,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+import { getAIInsights } from "@/lib/ai";
+
 export default function DashboardPage() {
-  const [dashboard, setDashboard] = useState<any>(null);
+  const [dashboard, setDashboard] = useState(null);
+  const [aiData, setAiData] = useState<any>(null);
   const monthlyIncome = userProfile.monthlyIncome + 1200;
 
   useEffect(() => {
@@ -27,6 +30,9 @@ export default function DashboardPage() {
       try {
         const data = await getDashboard();
         setDashboard(data);
+
+        const ai = await getAIInsights();
+        setAiData(ai);
       } catch (error) {
         console.error(error);
       }
@@ -35,7 +41,7 @@ export default function DashboardPage() {
     fetchDashboard();
   }, []);
 
-  if (!dashboard) {
+  if (!dashboard || !aiData) {
     return <div className="p-6">Loading...</div>;
   }
 
@@ -50,32 +56,34 @@ export default function DashboardPage() {
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            title="Total Balance"
-            value={`$${userProfile.totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+            title="Total Expenses"
+            value={`₹${dashboard.totalExpenses.toLocaleString()}`}
             change={{ value: 12.5, type: "increase" }}
             iconName="wallet"
             iconColor="text-primary"
             iconBgColor="bg-primary/10"
           />
           <StatCard
-            title="Monthly Income"
-            value={`$${monthlyIncome.toLocaleString()}`}
+            title="Transactions"
+            value={dashboard.totalTransactions.toString()}
             change={{ value: 8.2, type: "increase" }}
             iconName="trending-up"
             iconColor="text-accent"
             iconBgColor="bg-accent/10"
           />
           <StatCard
-            title="Monthly Expenses"
-            value={`₹${dashboard.totalExpenses.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+            title="Average Expense"
+            value={`₹${dashboard.averageExpense.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+            })}`}
             change={{ value: 3.1, type: "decrease" }}
             iconName="target"
             iconColor="text-chart-5"
             iconBgColor="bg-chart-5/10"
           />
           <StatCard
-            title="Savings Rate"
-            value={`${userProfile.savingsRate}%`}
+            title="Financial Health"
+            value={`${dashboard.financialHealth.score}/100`}
             change={{ value: 2.3, type: "increase" }}
             iconName="piggy-bank"
             iconColor="text-chart-2"
@@ -102,9 +110,21 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="pt-0">
             <div className="grid gap-3 md:grid-cols-2">
-              {insights.slice(0, 2).map((insight) => (
-                <InsightCard key={insight.id} insight={insight} compact />
-              ))}
+              {aiData.smartSuggestions
+                .slice(0, 2)
+                .map((suggestion: string, index: number) => (
+                  <InsightCard
+                    key={index}
+                    insight={{
+                      id: index.toString(),
+                      type: "tip",
+                      title: "AI Recommendation",
+                      description: suggestion,
+                      icon: "lightbulb",
+                    }}
+                    compact
+                  />
+                ))}
             </div>
           </CardContent>
         </Card>
@@ -112,16 +132,19 @@ export default function DashboardPage() {
         {/* Charts and Health Score */}
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <IncomeExpenseChart />
+            <IncomeExpenseChart monthlyTrend={dashboard.monthlyTrend} />
           </div>
           <div className="flex flex-col gap-6">
-            <HealthScore />
-            <CategoryPieChart />
+            <HealthScore
+              score={dashboard.financialHealth.score}
+              status={dashboard.financialHealth.status}
+            />
+            <CategoryPieChart categoryBreakdown={dashboard.categoryBreakdown} />
           </div>
         </div>
 
         {/* Recent Transactions */}
-        <RecentTransactions />
+        <RecentTransactions transactions={dashboard.recentExpenses} />
       </div>
     </div>
   );
