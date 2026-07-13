@@ -1,34 +1,51 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Header } from "@/components/dashboard/header"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+import { useEffect, useState } from "react";
+import { Header } from "@/components/dashboard/header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { transactions, type Transaction } from "@/lib/mock-data"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/dialog";
+
+import {
+  getExpenses,
+  createExpense,
+  deleteExpense,
+  updateExpense,
+} from "@/lib/expenses";
+
+interface Expense {
+  _id: string;
+  title: string;
+  amount: number;
+  category: string;
+  paymentMethod: string;
+  date: string;
+}
+
+import { cn } from "@/lib/utils";
 import {
   Plus,
-  ArrowUpRight,
   ArrowDownRight,
   Search,
   Filter,
-} from "lucide-react"
+  Trash2,
+  Pencil,
+} from "lucide-react";
 import {
   PieChart,
   Pie,
@@ -36,95 +53,156 @@ import {
   ResponsiveContainer,
   Tooltip,
   Legend,
-} from "recharts"
+} from "recharts";
 
 const categories = [
+  "Cloud Services",
+  "Equipment",
   "Food",
-  "Housing",
-  "Transportation",
-  "Entertainment",
+  "Internet",
+  "Marketing",
+  "Office Rent",
+  "Software",
   "Utilities",
-  "Shopping",
-  "Health",
-  "Income",
-]
+];
 
 const categoryColors: Record<string, string> = {
-  Income: "bg-accent/10 text-accent border-accent/20",
-  Housing: "bg-chart-1/10 text-chart-1 border-chart-1/20",
-  Food: "bg-chart-2/10 text-chart-2 border-chart-2/20",
-  Transportation: "bg-chart-3/10 text-chart-3 border-chart-3/20",
-  Entertainment: "bg-chart-4/10 text-chart-4 border-chart-4/20",
-  Utilities: "bg-chart-5/10 text-chart-5 border-chart-5/20",
-  Shopping: "bg-primary/10 text-primary border-primary/20",
-  Health: "bg-accent/10 text-accent border-accent/20",
-}
+  "Cloud Services": "bg-blue-100 text-blue-700",
+  Equipment: "bg-purple-100 text-purple-700",
+  Internet: "bg-cyan-100 text-cyan-700",
+  Marketing: "bg-orange-100 text-orange-700",
+  "Office Rent": "bg-pink-100 text-pink-700",
+  Software: "bg-green-100 text-green-700",
+};
 
 const COLORS = [
-  'var(--color-chart-1)',
-  'var(--color-chart-2)',
-  'var(--color-chart-3)',
-  'var(--color-chart-4)',
-  'var(--color-chart-5)',
-  'var(--color-primary)',
-  'var(--color-accent)',
-]
+  "var(--color-chart-1)",
+  "var(--color-chart-2)",
+  "var(--color-chart-3)",
+  "var(--color-chart-4)",
+  "var(--color-chart-5)",
+  "var(--color-primary)",
+  "var(--color-accent)",
+];
 
 export default function ExpensesPage() {
-  const [allTransactions, setAllTransactions] = useState<Transaction[]>(transactions)
-  const [filterCategory, setFilterCategory] = useState<string>("all")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [allTransactions, setAllTransactions] = useState<Expense[]>([]);
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newExpense, setNewExpense] = useState({
     description: "",
     amount: "",
     category: "",
-    type: "expense" as "expense" | "income",
-  })
+  });
+  const [editingExpense, setEditingExpense] = useState<any>(null);
+
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
+
+  const fetchExpenses = async () => {
+    try {
+      const data = await getExpenses();
+
+      setAllTransactions(data.expenses);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const filteredTransactions = allTransactions.filter((t) => {
-    const matchesCategory = filterCategory === "all" || t.category === filterCategory
-    const matchesSearch = t.description.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
+    const matchesCategory =
+      filterCategory === "all" || t.category === filterCategory;
 
-  const handleAddExpense = () => {
-    if (!newExpense.description || !newExpense.amount || !newExpense.category) return
+    const matchesSearch = t.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
 
-    const transaction: Transaction = {
-      id: String(allTransactions.length + 1),
-      description: newExpense.description,
-      amount: parseFloat(newExpense.amount),
-      category: newExpense.category,
-      date: new Date().toISOString().split('T')[0],
-      type: newExpense.type,
+    return matchesCategory && matchesSearch;
+  });
+
+  const handleAddExpense = async () => {
+    try {
+      if (editingExpense) {
+        await updateExpense(editingExpense._id, {
+          title: newExpense.description,
+          amount: Number(newExpense.amount),
+          category: newExpense.category,
+          paymentMethod: editingExpense.paymentMethod,
+          description: newExpense.description,
+          date: editingExpense.date,
+        });
+      } else {
+        await createExpense({
+          title: newExpense.description,
+          amount: Number(newExpense.amount),
+          category: newExpense.category,
+          paymentMethod: "UPI",
+          description: newExpense.description,
+          date: new Date(),
+        });
+      }
+
+      await fetchExpenses();
+
+      setEditingExpense(null);
+
+      setNewExpense({
+        description: "",
+        amount: "",
+        category: "",
+      });
+
+      setIsDialogOpen(false);
+    } catch (err) {
+      console.error(err);
     }
+  };
 
-    setAllTransactions([transaction, ...allTransactions])
-    setNewExpense({ description: "", amount: "", category: "", type: "expense" })
-    setIsDialogOpen(false)
-  }
+  const handleDeleteExpense = async (id: string) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this expense?",
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await deleteExpense(id);
+
+      await fetchExpenses();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleEditExpense = (expense: any) => {
+    setEditingExpense(expense);
+
+    setNewExpense({
+      description: expense.title,
+      amount: expense.amount.toString(),
+      category: expense.category,
+    });
+
+    setIsDialogOpen(true);
+  };
 
   // Calculate category breakdown for pie chart
-  const expensesByCategory = allTransactions
-    .filter((t) => t.type === 'expense')
-    .reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount
-      return acc
-    }, {} as Record<string, number>)
+  const expensesByCategory = allTransactions.reduce(
+    (acc, t) => {
+      acc[t.category] = (acc[t.category] || 0) + t.amount;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   const pieData = Object.entries(expensesByCategory).map(([name, value]) => ({
     name,
     value: Math.round(value * 100) / 100,
-  }))
+  }));
 
-  const totalExpenses = allTransactions
-    .filter((t) => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0)
-
-  const totalIncome = allTransactions
-    .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
+  const totalExpenses = allTransactions.reduce((sum, t) => sum + t.amount, 0);
 
   return (
     <div className="flex flex-col">
@@ -139,9 +217,14 @@ export default function ExpensesPage() {
           <Card className="border-border/50 shadow-sm">
             <CardContent className="p-6">
               <div className="flex flex-col gap-1">
-                <span className="text-sm font-medium text-muted-foreground">Total Income</span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  Total Expenses
+                </span>
                 <span className="text-2xl font-bold text-accent">
-                  +${totalIncome.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  ₹
+                  {totalExpenses.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                  })}
                 </span>
               </div>
             </CardContent>
@@ -149,9 +232,12 @@ export default function ExpensesPage() {
           <Card className="border-border/50 shadow-sm">
             <CardContent className="p-6">
               <div className="flex flex-col gap-1">
-                <span className="text-sm font-medium text-muted-foreground">Total Expenses</span>
-                <span className="text-2xl font-bold text-destructive">
-                  -${totalExpenses.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                <span className="text-sm font-medium text-muted-foreground">
+                  Total Transactions
+                </span>
+
+                <span className="text-2xl font-bold">
+                  {allTransactions.length}
                 </span>
               </div>
             </CardContent>
@@ -159,12 +245,16 @@ export default function ExpensesPage() {
           <Card className="border-border/50 shadow-sm">
             <CardContent className="p-6">
               <div className="flex flex-col gap-1">
-                <span className="text-sm font-medium text-muted-foreground">Net Balance</span>
-                <span className={cn(
-                  "text-2xl font-bold",
-                  totalIncome - totalExpenses >= 0 ? "text-accent" : "text-destructive"
-                )}>
-                  ${(totalIncome - totalExpenses).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                <span className="text-sm font-medium text-muted-foreground">
+                  Average Expense
+                </span>
+                <span className="text-2xl font-bold text-primary">
+                  ₹
+                  {(
+                    totalExpenses / (allTransactions.length || 1)
+                  ).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                  })}
                 </span>
               </div>
             </CardContent>
@@ -175,10 +265,12 @@ export default function ExpensesPage() {
           {/* Pie Chart */}
           <Card className="border-border/50 shadow-sm lg:col-span-1">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">Category Breakdown</CardTitle>
+              <CardTitle className="text-base font-semibold">
+                Category Breakdown
+              </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="h-[300px] w-full">
+              <div className="h-75 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -191,21 +283,31 @@ export default function ExpensesPage() {
                       dataKey="value"
                     >
                       {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
                       ))}
                     </Pie>
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: 'var(--color-popover)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: '8px',
+                        backgroundColor: "var(--color-popover)",
+                        border: "1px solid var(--color-border)",
+                        borderRadius: "8px",
                       }}
-                      formatter={(value: number) => [`$${value.toFixed(2)}`, '']}
+                      formatter={(value: number) => [
+                        `₹${value.toFixed(2)}`,
+                        "",
+                      ]}
                     />
                     <Legend
                       verticalAlign="bottom"
                       height={36}
-                      formatter={(value) => <span className="text-xs text-muted-foreground">{value}</span>}
+                      formatter={(value) => (
+                        <span className="text-xs text-muted-foreground">
+                          {value}
+                        </span>
+                      )}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -216,7 +318,9 @@ export default function ExpensesPage() {
           {/* Transactions List */}
           <Card className="border-border/50 shadow-sm lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between pb-4">
-              <CardTitle className="text-base font-semibold">All Transactions</CardTitle>
+              <CardTitle className="text-base font-semibold">
+                All Transactions
+              </CardTitle>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button size="sm">
@@ -226,7 +330,9 @@ export default function ExpensesPage() {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Add New Transaction</DialogTitle>
+                    <DialogTitle>
+                      {editingExpense ? "Edit Expense" : "Add Expense"}
+                    </DialogTitle>
                   </DialogHeader>
                   <div className="flex flex-col gap-4 pt-4">
                     <div className="flex flex-col gap-2">
@@ -234,7 +340,12 @@ export default function ExpensesPage() {
                       <Input
                         placeholder="e.g., Coffee Shop"
                         value={newExpense.description}
-                        onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
+                        onChange={(e) =>
+                          setNewExpense({
+                            ...newExpense,
+                            description: e.target.value,
+                          })
+                        }
                       />
                     </div>
                     <div className="flex flex-col gap-2">
@@ -243,42 +354,36 @@ export default function ExpensesPage() {
                         type="number"
                         placeholder="0.00"
                         value={newExpense.amount}
-                        onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                        onChange={(e) =>
+                          setNewExpense({
+                            ...newExpense,
+                            amount: e.target.value,
+                          })
+                        }
                       />
                     </div>
                     <div className="flex flex-col gap-2">
                       <label className="text-sm font-medium">Category</label>
                       <Select
                         value={newExpense.category}
-                        onValueChange={(value) => setNewExpense({ ...newExpense, category: value })}
+                        onValueChange={(value) =>
+                          setNewExpense({ ...newExpense, category: value })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map((cat) => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="text-sm font-medium">Type</label>
-                      <Select
-                        value={newExpense.type}
-                        onValueChange={(value) => setNewExpense({ ...newExpense, type: value as "expense" | "income" })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="expense">Expense</SelectItem>
-                          <SelectItem value="income">Income</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
                     <Button onClick={handleAddExpense} className="mt-2">
-                      Add Transaction
+                      {editingExpense ? "Update Expense" : "Save Expense"}
                     </Button>
                   </div>
                 </DialogContent>
@@ -296,7 +401,10 @@ export default function ExpensesPage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <Select
+                  value={filterCategory}
+                  onValueChange={setFilterCategory}
+                >
                   <SelectTrigger className="w-full sm:w-40">
                     <Filter className="mr-2 h-4 w-4" />
                     <SelectValue placeholder="Filter" />
@@ -304,64 +412,68 @@ export default function ExpensesPage() {
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
                     {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Transactions */}
-              <div className="flex max-h-[400px] flex-col gap-2 overflow-y-auto">
+              <div className="flex max-h-100 flex-col gap-2 overflow-y-auto">
                 {filteredTransactions.map((transaction) => (
                   <div
-                    key={transaction.id}
-                    className="flex items-center justify-between rounded-lg bg-muted/30 p-3 transition-colors hover:bg-muted/50"
+                    key={transaction._id}
+                    className="flex items-center justify-between rounded-lg bg-muted/30 px-5 py-4 hover:bg-muted/50 transition"
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={cn(
-                          "flex h-9 w-9 items-center justify-center rounded-full",
-                          transaction.type === 'income' ? "bg-accent/10" : "bg-muted"
-                        )}
-                      >
-                        {transaction.type === 'income' ? (
-                          <ArrowUpRight className="h-4 w-4 text-accent" />
-                        ) : (
-                          <ArrowDownRight className="h-4 w-4 text-muted-foreground" />
-                        )}
+                    {/* Left */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                        <ArrowDownRight className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-foreground">
-                          {transaction.description}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(transaction.date).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </span>
+
+                      <div>
+                        <p className="font-medium">{transaction.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(transaction.date).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "short",
+                              day: "numeric",
+                            },
+                          )}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+
+                    {/* Right */}
+                    <div className="flex items-center gap-8">
                       <Badge
                         variant="outline"
-                        className={cn(
-                          "hidden text-xs font-normal sm:flex",
-                          categoryColors[transaction.category]
-                        )}
+                        className={cn(categoryColors[transaction.category])}
                       >
                         {transaction.category}
                       </Badge>
-                      <span
-                        className={cn(
-                          "text-sm font-semibold tabular-nums",
-                          transaction.type === 'income' ? "text-accent" : "text-foreground"
-                        )}
-                      >
-                        {transaction.type === 'income' ? '+' : '-'}$
-                        {transaction.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+
+                      <span className="w-36 text-right font-semibold tabular-nums">
+                        -₹
+                        {transaction.amount.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                        })}
                       </span>
+
+                      <div className="flex items-center gap-3">
+                        <Pencil
+                          className="h-5 w-5 cursor-pointer text-blue-500 hover:text-blue-700"
+                          onClick={() => handleEditExpense(transaction)}
+                        />
+
+                        <Trash2
+                          className="h-5 w-5 cursor-pointer text-red-500 hover:text-red-700"
+                          onClick={() => handleDeleteExpense(transaction._id)}
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -371,5 +483,5 @@ export default function ExpensesPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

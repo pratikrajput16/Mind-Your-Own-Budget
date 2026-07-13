@@ -37,7 +37,7 @@ export function IncomeExpenseChart({ monthlyTrend }: IncomeExpenseChartProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="h-[280px] w-full">
+        <div className="h-70 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={monthlyTrend}
@@ -148,7 +148,7 @@ export function CategoryPieChart({ categoryBreakdown }: CategoryPieChartProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="h-[280px] w-full">
+        <div className="h-70 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
