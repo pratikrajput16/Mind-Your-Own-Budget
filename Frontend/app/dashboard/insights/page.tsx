@@ -1,327 +1,394 @@
-"use client"
+"use client";
 
-import { Header } from "@/components/dashboard/header"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { insights, userProfile, categoryBreakdown, budgets } from "@/lib/mock-data"
-import { cn } from "@/lib/utils"
 import {
-  AlertTriangle,
-  Trophy,
-  Lightbulb,
-  Info,
-  Home,
+  Brain,
   TrendingUp,
+  Lightbulb,
   Sparkles,
-  ArrowRight,
-  DollarSign,
-  Target,
-  PiggyBank,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { Progress } from "@/components/ui/progress"
+  BarChart3,
+  ArrowUpRight,
+  ArrowDownRight,
+  Wallet,
+} from "lucide-react";
 
-const iconMap: Record<string, React.ElementType> = {
-  'alert-triangle': AlertTriangle,
-  'trophy': Trophy,
-  'lightbulb': Lightbulb,
-  'info': Info,
-  'home': Home,
-  'trending-up': TrendingUp,
-}
-
-const typeStyles = {
-  warning: {
-    bg: "bg-warning/10",
-    border: "border-warning/30",
-    icon: "text-warning",
-    badge: "bg-warning/20 text-warning border-warning/30",
-  },
-  success: {
-    bg: "bg-accent/10",
-    border: "border-accent/30",
-    icon: "text-accent",
-    badge: "bg-accent/20 text-accent border-accent/30",
-  },
-  tip: {
-    bg: "bg-primary/10",
-    border: "border-primary/30",
-    icon: "text-primary",
-    badge: "bg-primary/20 text-primary border-primary/30",
-  },
-  info: {
-    bg: "bg-muted",
-    border: "border-border",
-    icon: "text-muted-foreground",
-    badge: "bg-muted text-muted-foreground border-border",
-  },
-}
+import { useEffect, useState } from "react";
+import { Header } from "@/components/dashboard/header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { analyzeExpenses } from "@/lib/ai";
 
 export default function InsightsPage() {
-  // Generate additional AI insights based on spending patterns
-  const foodSpending = categoryBreakdown.find(c => c.name === 'Food')?.value || 0
-  const housingSpending = categoryBreakdown.find(c => c.name === 'Housing')?.value || 0
-  const monthlyIncome = userProfile.monthlyIncome + 1200
+  const [analysis, setAnalysis] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const spendingAnalysis = [
-    {
-      category: "Food",
-      current: foodSpending,
-      recommended: monthlyIncome * 0.12,
-      status: foodSpending > monthlyIncome * 0.12 ? 'over' : 'under',
-    },
-    {
-      category: "Housing",
-      current: housingSpending,
-      recommended: monthlyIncome * 0.28,
-      status: housingSpending > monthlyIncome * 0.28 ? 'over' : 'under',
-    },
-    {
-      category: "Transportation",
-      current: 97.30,
-      recommended: monthlyIncome * 0.10,
-      status: 'under',
-    },
-    {
-      category: "Entertainment",
-      current: 26.98,
-      recommended: monthlyIncome * 0.05,
-      status: 'under',
-    },
-  ]
+  useEffect(() => {
+    const fetchAnalysis = async () => {
+      try {
+        const data = await analyzeExpenses();
+        setAnalysis(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const totalPotentialSavings = insights
-    .filter(i => i.savings)
-    .reduce((sum, i) => sum + (i.savings || 0), 0)
+    fetchAnalysis();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p className="text-lg font-medium">
+          Analyzing your startup finances...
+        </p>
+      </div>
+    );
+  }
+
+  if (!analysis) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Unable to load AI analysis.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col">
       <Header
-        title="AI Insights"
-        subtitle="Smart recommendations powered by AI"
+        title="AI Financial Insights"
+        subtitle="AI-powered analysis of your startup expenses"
       />
 
       <div className="flex flex-col gap-6 p-6">
-        {/* AI Summary Card */}
-        <Card className="border-primary/20 bg-primary/5 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-                <Sparkles className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-foreground">Your Financial Overview</h3>
-                <p className="mt-1 leading-relaxed text-muted-foreground">
-                  Great job! Your savings rate of <span className="font-semibold text-accent">{userProfile.savingsRate}%</span> is 
-                  above the recommended 20%. Based on your spending patterns, I have identified{" "}
-                  <span className="font-semibold text-primary">{insights.length} insights</span> and 
-                  potential savings of <span className="font-semibold text-accent">${totalPotentialSavings}/month</span>.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <Badge variant="outline" className="bg-accent/10 text-accent border-accent/20">
-                    <Trophy className="mr-1 h-3 w-3" />
-                    Top 15% Savers
-                  </Badge>
-                  <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                    <Target className="mr-1 h-3 w-3" />
-                    On Track for Goals
-                  </Badge>
+        {/* Summary Cards */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="border-border/50 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wallet className="h-5 w-5 text-red-500" />
+                Total Expenses
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              <p className="text-3xl font-bold text-red-500">
+                ₹{analysis.summary.totalExpenses.toLocaleString("en-IN")}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/50 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-500" />
+                Transactions
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              <p className="text-3xl font-bold">
+                {analysis.summary.transactions}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/50 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-green-500" />
+                Average Expense
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              <p className="text-3xl font-bold text-blue-500">
+                ₹
+                {analysis.summary.averageExpense.toLocaleString("en-IN", {
+                  maximumFractionDigits: 2,
+                })}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+        {/* Highest & Lowest Expense Categories */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card className="border-red-200 shadow-sm transition-all duration-300">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ArrowUpRight className="h-5 w-5 text-red-500" />
+                Highest Expense
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              <p className="text-xl font-semibold">
+                {analysis.highestCategory.category}
+              </p>
+
+              <p className="mt-2 text-3xl font-bold text-red-500">
+                ₹{analysis.highestCategory.amount.toLocaleString("en-IN")}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-green-200 shadow-sm transition-all duration-300">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ArrowDownRight className="h-5 w-5 text-green-500" />
+                Lowest Expense
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              <p className="text-xl font-semibold">
+                {analysis.lowestCategory.category}
+              </p>
+
+              <p className="mt-2 text-3xl font-bold text-green-600">
+                ₹{analysis.lowestCategory.amount.toLocaleString("en-IN")}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Expense Trends */}
+        <Card className="border-border/50 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <CardHeader>
+            <CardTitle>Expense Trends</CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              {analysis.trends.map((trend: any, index: number) => (
+                <div
+                  key={index}
+                  className="rounded-lg border border-border bg-muted/30 p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">{trend.category}</h3>
+
+                    <span
+                      className="
+rounded-full
+bg-red-100
+px-3
+py-1
+text-xs
+font-semibold
+text-red-600
+"
+                    >
+                      Increasing
+                    </span>
+                  </div>
+
+                  <p className="mt-4 text-3xl font-bold">{trend.change}</p>
+
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Compared to the previous period
+                  </p>
                 </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* AI Recommendations */}
+        <Card className="border-border/50 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-yellow-500" />
+              AI Recommendations
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <div className="space-y-3">
+              {analysis.recommendations.map(
+                (recommendation: string, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-3 rounded-lg border border-border bg-muted/30 p-4"
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+                      ✔
+                    </div>
+
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      {recommendation}
+                    </p>
+                  </div>
+                ),
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Smart Suggestions */}
+        <Card className="border-border/50 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-purple-500" />
+              Smart Suggestions
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <div className="space-y-4">
+              {analysis.smartSuggestions.map(
+                (suggestion: string, index: number) => (
+                  <div
+                    key={index}
+                    className="rounded-lg border-l-4 border-yellow-500 bg-yellow-50 p-4"
+                  >
+                    <div className="flex gap-3">
+                      <span className="text-xl">💡</span>
+
+                      <p className="leading-6 text-muted-foreground">
+                        {suggestion}
+                      </p>
+                    </div>
+                  </div>
+                ),
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Expense Forecast */}
+        <Card className="border-border/50 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-blue-500" />
+              Expense Forecast
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-4">
+              <div className="rounded-lg bg-muted/30 p-4">
+                <p className="text-sm text-muted-foreground">Current Month</p>
+
+                <p className="mt-2 text-xl font-bold">
+                  {analysis.forecast.currentMonth}
+                </p>
+              </div>
+
+              <div className="rounded-lg bg-muted/30 p-4">
+                <p className="text-sm text-muted-foreground">
+                  Current Spending
+                </p>
+
+                <p className="mt-2 text-xl font-bold">
+                  ₹{analysis.forecast.currentTotal.toLocaleString("en-IN")}
+                </p>
+              </div>
+
+              <div className="rounded-lg bg-blue-50 p-4">
+                <p className="text-sm text-muted-foreground">
+                  Predicted Next Month
+                </p>
+
+                <p className="mt-2 text-xl font-bold text-blue-600">
+                  ₹
+                  {analysis.forecast.predictedNextMonth.toLocaleString("en-IN")}
+                </p>
+              </div>
+
+              <div className="rounded-lg bg-red-50 p-4">
+                <p className="text-sm text-muted-foreground">
+                  Expected Increase
+                </p>
+
+                <p className="mt-2 text-xl font-bold text-red-600">
+                  +₹{analysis.forecast.expectedChange.toLocaleString("en-IN")}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Quick Stats */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="border-accent/20 bg-accent/5 shadow-sm">
-            <CardContent className="flex items-center gap-4 p-5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-accent/20">
-                <DollarSign className="h-5 w-5 text-accent" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Potential Monthly Savings</p>
-                <p className="text-2xl font-bold text-accent">${totalPotentialSavings}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-primary/20 bg-primary/5 shadow-sm">
-            <CardContent className="flex items-center gap-4 p-5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/20">
-                <Lightbulb className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Active Insights</p>
-                <p className="text-2xl font-bold text-primary">{insights.length}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-chart-2/20 bg-chart-2/5 shadow-sm">
-            <CardContent className="flex items-center gap-4 p-5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-chart-2/20">
-                <PiggyBank className="h-5 w-5 text-chart-2" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Yearly Projection</p>
-                <p className="text-2xl font-bold text-chart-2">${totalPotentialSavings * 12}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* AI Financial Advisor */}
+        <Card
+          className="
+border-primary/30
+bg-linear-to-br
+from-primary/10
+via-background
+to-background
+shadow-xl
+"
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <Brain className="h-6 w-6" />
+              AI Financial Advisor
+            </CardTitle>
+          </CardHeader>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Detailed Insights */}
-          <div className="flex flex-col gap-4">
-            <h3 className="text-lg font-semibold">Personalized Recommendations</h3>
-            {insights.map((insight) => {
-              const IconComponent = iconMap[insight.icon] || Info
-              const styles = typeStyles[insight.type]
+          <CardContent>
+            <div className="space-y-4">
+              {analysis.llmAdvice
+                .replace(
+                  "Here are 5 practical financial suggestions for your startup:",
+                  "",
+                )
+                .split(/\n\s*\n/)
+                .filter((section: string) => section.trim() !== "")
+                .map((section: string, index: number) => {
+                  const lines = section.split("\n");
 
-              return (
-                <Card
-                  key={insight.id}
-                  className={cn("border transition-all hover:shadow-md", styles.border, styles.bg)}
-                >
-                  <CardContent className="p-5">
-                    <div className="flex gap-4">
-                      <div
-                        className={cn(
-                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-                          insight.type === 'warning' && "bg-warning/20",
-                          insight.type === 'success' && "bg-accent/20",
-                          insight.type === 'tip' && "bg-primary/20",
-                          insight.type === 'info' && "bg-muted-foreground/20"
-                        )}
-                      >
-                        <IconComponent className={cn("h-5 w-5", styles.icon)} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <h4 className="font-semibold text-card-foreground">{insight.title}</h4>
-                          <Badge variant="outline" className={styles.badge}>
-                            {insight.type.charAt(0).toUpperCase() + insight.type.slice(1)}
-                          </Badge>
-                        </div>
-                        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                          {insight.description}
-                        </p>
-                        {insight.savings && (
-                          <div className="mt-3 flex items-center gap-2">
-                            <Badge className="bg-accent text-accent-foreground">
-                              Save ${insight.savings}/month
-                            </Badge>
-                            <Button variant="ghost" size="sm" className="h-7 text-primary">
-                              Learn More
-                              <ArrowRight className="ml-1 h-3 w-3" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
+                  const title = lines[0];
 
-          {/* Spending Analysis */}
-          <div className="flex flex-col gap-4">
-            <h3 className="text-lg font-semibold">Spending Analysis</h3>
-            <Card className="border-border/50 shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold">Budget vs Recommended</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-4 pt-0">
-                {spendingAnalysis.map((item) => {
-                  const percentage = Math.min((item.current / item.recommended) * 100, 150)
-                  const isOver = item.status === 'over'
+                  const body = lines.slice(1).join(" ");
 
                   return (
-                    <div key={item.category} className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{item.category}</span>
-                        <span className={cn(
-                          "text-sm",
-                          isOver ? "text-warning" : "text-accent"
-                        )}>
-                          ${item.current.toFixed(0)} / ${item.recommended.toFixed(0)}
-                        </span>
+                    <div
+                      key={index}
+                      className="
+              rounded-xl
+              border
+              border-border/50
+              bg-background
+              p-5
+              transition-all
+              duration-300
+              hover:shadow-md
+            "
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="
+                  flex
+                  h-10
+                  w-10
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-primary/10
+                  text-primary
+                  font-bold
+                "
+                        >
+                          {index + 1}
+                        </div>
+
+                        <h3 className="font-semibold text-lg">{title}</h3>
                       </div>
-                      <Progress
-                        value={percentage}
-                        className={cn(
-                          "h-2",
-                          isOver && "[&>div]:bg-warning"
-                        )}
-                      />
-                      <span className={cn(
-                        "text-xs",
-                        isOver ? "text-warning" : "text-muted-foreground"
-                      )}>
-                        {isOver 
-                          ? `${(percentage - 100).toFixed(0)}% over recommended` 
-                          : `${(100 - percentage).toFixed(0)}% under budget`}
-                      </span>
+
+                      {body && (
+                        <p className="mt-4 leading-7 text-muted-foreground">
+                          {body}
+                        </p>
+                      )}
                     </div>
-                  )
+                  );
                 })}
-              </CardContent>
-            </Card>
-
-            {/* AI Tips Card */}
-            <Card className="border-border/50 shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  AI Quick Tips
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <ul className="flex flex-col gap-3">
-                  <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <div className="mt-1 h-1.5 w-1.5 rounded-full bg-primary" />
-                    Consider automating your savings - set up automatic transfers on payday
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <div className="mt-1 h-1.5 w-1.5 rounded-full bg-primary" />
-                    Your emergency fund could cover 4.2 months of expenses - aim for 6 months
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <div className="mt-1 h-1.5 w-1.5 rounded-full bg-primary" />
-                    Review your subscriptions quarterly to eliminate unused services
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <div className="mt-1 h-1.5 w-1.5 rounded-full bg-primary" />
-                    With your surplus, consider contributing to a retirement account
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* CTA Card */}
-            <Card className="border-primary/30 bg-primary/5">
-              <CardContent className="flex flex-col items-center gap-4 p-6 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
-                  <Sparkles className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-semibold">Want personalized advice?</h4>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Chat with our AI assistant for detailed financial guidance
-                  </p>
-                </div>
-                <Link href="/dashboard/chat">
-                  <Button>
-                    Start Chat
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
-  )
+  );
 }
