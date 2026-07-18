@@ -15,6 +15,8 @@ import { useEffect, useState } from "react";
 import { Header } from "@/components/dashboard/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { analyzeExpenses } from "@/lib/ai";
+import { downloadPdfReport, downloadCsvReport } from "@/lib/report";
+import { Button } from "@/components/ui/button";
 
 export default function InsightsPage() {
   const [analysis, setAnalysis] = useState<any>(null);
@@ -34,6 +36,48 @@ export default function InsightsPage() {
 
     fetchAnalysis();
   }, []);
+
+  const handleDownloadPdf = async () => {
+    try {
+      const blob = await downloadPdfReport();
+
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+
+      a.href = url;
+      a.download = "MindYourOwnBudget_Report.pdf";
+
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDownloadCsv = async () => {
+    try {
+      const blob = await downloadCsvReport();
+
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+
+      a.href = url;
+      a.download = "MindYourOwnBudget_Expenses.csv";
+
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   if (loading) {
     return (
@@ -59,6 +103,15 @@ export default function InsightsPage() {
         title="AI Financial Insights"
         subtitle="AI-powered analysis of your startup expenses"
       />
+
+      {/* Download Buttons */}
+      <div className="flex justify-end gap-3 px-6 pt-6">
+        <Button onClick={handleDownloadPdf}>Download PDF</Button>
+
+        <Button variant="outline" onClick={handleDownloadCsv}>
+          Download CSV
+        </Button>
+      </div>
 
       <div className="flex flex-col gap-6 p-6">
         {/* Summary Cards */}
