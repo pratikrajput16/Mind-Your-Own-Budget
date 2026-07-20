@@ -18,8 +18,10 @@ import { analyzeExpenses } from "@/lib/ai";
 import { downloadPdfReport, downloadCsvReport } from "@/lib/report";
 import { Button } from "@/components/ui/button";
 
+import { AIAnalysis } from "@/types/ai";
+
 export default function InsightsPage() {
-  const [analysis, setAnalysis] = useState<any>(null);
+  const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -213,16 +215,19 @@ export default function InsightsPage() {
 
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2">
-              {analysis.trends.map((trend: any, index: number) => (
-                <div
-                  key={index}
-                  className="rounded-lg border border-border bg-muted/30 p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">{trend.category}</h3>
+              {analysis.trends.map(
+                (trend: AIAnalysis["trends"][number], index: number) => (
+                  <div
+                    key={index}
+                    className="rounded-lg border border-border bg-muted/30 p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold">
+                        {trend.category}
+                      </h3>
 
-                    <span
-                      className="
+                      <span
+                        className="
 rounded-full
 bg-red-100
 px-3
@@ -231,18 +236,19 @@ text-xs
 font-semibold
 text-red-600
 "
-                    >
-                      Increasing
-                    </span>
+                      >
+                        Increasing
+                      </span>
+                    </div>
+
+                    <p className="mt-4 text-3xl font-bold">{trend.change}</p>
+
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Compared to the previous period
+                    </p>
                   </div>
-
-                  <p className="mt-4 text-3xl font-bold">{trend.change}</p>
-
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Compared to the previous period
-                  </p>
-                </div>
-              ))}
+                ),
+              )}
             </div>
           </CardContent>
         </Card>

@@ -12,7 +12,6 @@ import {
 } from "@/components/dashboard/overview-charts";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { HealthScore } from "@/components/dashboard/health-score";
-import { userProfile, insights } from "@/lib/mock-data";
 import { Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
@@ -20,10 +19,12 @@ import { Button } from "@/components/ui/button";
 
 import { getAIInsights } from "@/lib/ai";
 
+import { DashboardData } from "@/types/dashboard";
+import { AIAnalysis } from "@/types/ai";
+
 export default function DashboardPage() {
-  const [dashboard, setDashboard] = useState(null);
-  const [aiData, setAiData] = useState<any>(null);
-  const monthlyIncome = userProfile.monthlyIncome + 1200;
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [aiData, setAiData] = useState<AIAnalysis | null>(null);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -42,7 +43,11 @@ export default function DashboardPage() {
   }, []);
 
   if (!dashboard || !aiData) {
-    return <div className="p-6">Loading...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p className="text-muted-foreground">Loading dashboard...</p>
+      </div>
+    );
   }
 
   return (

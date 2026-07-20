@@ -6,6 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+
+import { Expense } from "@/types/expense";
+
 import {
   Select,
   SelectContent,
@@ -27,15 +30,6 @@ import {
   deleteExpense,
   updateExpense,
 } from "@/lib/expenses";
-
-interface Expense {
-  _id: string;
-  title: string;
-  amount: number;
-  category: string;
-  paymentMethod: string;
-  date: string;
-}
 
 import { cn } from "@/lib/utils";
 import {
@@ -95,7 +89,7 @@ export default function ExpensesPage() {
     amount: "",
     category: "",
   });
-  const [editingExpense, setEditingExpense] = useState<any>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   useEffect(() => {
     fetchExpenses();
@@ -176,7 +170,7 @@ export default function ExpensesPage() {
     }
   };
 
-  const handleEditExpense = (expense: any) => {
+  const handleEditExpense = (expense: Expense) => {
     setEditingExpense(expense);
 
     setNewExpense({
