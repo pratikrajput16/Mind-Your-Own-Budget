@@ -54,7 +54,7 @@ export default function DashboardPage() {
     <div className="flex flex-col">
       <Header
         title="Dashboard"
-        subtitle={`Welcome back, ${userProfile.name.split(" ")[0]}`}
+        subtitle="Here's your startup financial overview."
       />
 
       <div className="flex flex-col gap-6 p-6">

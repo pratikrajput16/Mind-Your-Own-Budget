@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-const AI_BASE_URL = "http://127.0.0.1:8000";
+const AI_BASE_URL = process.env.AI_SERVICE_URL;
 
 const analyzeExpenses = async (expenses) => {
   const response = await axios.post(

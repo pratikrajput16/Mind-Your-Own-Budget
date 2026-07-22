@@ -22,10 +22,10 @@ app.use(morgan("dev"));
 
 // CORS
 app.use(
-    cors({
-        origin: "http://localhost:3000",
-        credentials: true,
-    })
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  }),
 );
 
 // Body Parser
@@ -37,10 +37,10 @@ app.use(cookieParser());
 
 // Health Check
 app.get("/", (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: "Mind Your Own Budget Backend Running",
-    });
+  res.status(200).json({
+    success: true,
+    message: "Mind Your Own Budget Backend Running",
+  });
 });
 
 app.use("/api/v1/auth", authRoutes);
