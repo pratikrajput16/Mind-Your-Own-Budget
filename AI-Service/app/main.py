@@ -29,6 +29,26 @@ def home():
 def analyze(data: ExpenseRequest):
 
     expenses = data.expenses
+    
+    if not expenses:
+        return {
+            "success": True,
+            "summary": {
+                "totalExpenses": 0,
+                "transactions": 0,
+                "averageExpense": 0,
+            },
+            "categoryBreakdown": {},
+            "highestCategory": None,
+            "lowestCategory": None,
+            "recommendations": [],
+            "trends": [],
+            "forecast": None,
+            "smartSuggestions": [
+                "No expenses found. Add your first expense to receive AI insights."
+            ],
+            "llmAdvice": "No expenses available to analyze yet.",
+        }
 
     total = sum(expense["amount"] for expense in expenses)
 
